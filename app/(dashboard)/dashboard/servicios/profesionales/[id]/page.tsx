@@ -557,6 +557,15 @@ export default function ProfessionalDetailPage({ params }: ProfessionalDetailPag
                     </p>
                   </div>
                 </div>
+                <div className="flex items-center space-x-3">
+                  <FileText className="h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm font-medium">DNI</p>
+                    <p className="text-sm text-muted-foreground">
+                      {professional.user?.dni || "No proporcionado"}
+                    </p>
+                  </div>
+                </div>
                 {(professional as any).registrationType && (
                   <div className="flex items-center space-x-3">
                     <UserPlus className="h-4 w-4 text-muted-foreground" />
@@ -583,6 +592,15 @@ export default function ProfessionalDetailPage({ params }: ProfessionalDetailPag
                     <p className="text-sm font-medium">Ubicación</p>
                     <p className="text-sm text-muted-foreground">
                       {professional.location || "No especificada"}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <MapPin className="h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm font-medium">Ubicación del usuario</p>
+                    <p className="text-sm text-muted-foreground">
+                      {professional.user?.location || "No especificada"}
                     </p>
                   </div>
                 </div>
@@ -828,6 +846,29 @@ export default function ProfessionalDetailPage({ params }: ProfessionalDetailPag
                   </p>
                 </div>
               </div>
+              <div className="flex items-center space-x-3">
+                <Briefcase className="h-4 w-4 text-muted-foreground" />
+                <div>
+                  <p className="text-sm font-medium">Grupo profesional</p>
+                  <p className="text-sm text-muted-foreground">
+                    {professional.professionalGroup === "oficios"
+                      ? "Oficios"
+                      : professional.professionalGroup === "profesiones"
+                        ? "Profesiones"
+                        : "No especificado"}
+                  </p>
+                </div>
+              </div>
+              <div>
+                <p className="text-sm font-medium mb-2">Cobertura de servicio</p>
+                <div className="p-3 bg-muted rounded-lg">
+                  <p className="text-sm text-muted-foreground">
+                    {(professional.serviceLocations && professional.serviceLocations.length > 0)
+                      ? professional.serviceLocations.join(", ")
+                      : "No especificada"}
+                  </p>
+                </div>
+              </div>
               <div>
                 <p className="text-sm font-medium mb-2">Biografía profesional</p>
                 <div className="p-3 bg-muted rounded-lg">
@@ -923,6 +964,26 @@ export default function ProfessionalDetailPage({ params }: ProfessionalDetailPag
                 <span className="text-sm font-medium">Servicios</span>
                 <span className="text-sm text-muted-foreground">
                   {professionalServices.length}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Solicitudes de contacto</span>
+                <span className="text-sm text-muted-foreground">
+                  {professional.contactRequestsCount ?? 0}
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Datos Sensibles</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">DNI</span>
+                <span className="text-sm text-muted-foreground">
+                  {professional.user?.dni || "No proporcionado"}
                 </span>
               </div>
             </CardContent>

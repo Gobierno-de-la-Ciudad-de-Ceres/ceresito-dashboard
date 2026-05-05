@@ -27,6 +27,7 @@ export function adaptUser(apiUser: APIProfessionalResponse['user'], apiProfessio
       email: apiProfessional.email || '',
       firstName: apiProfessional.name?.split(' ')[0] || '',
       lastName: apiProfessional.name?.split(' ').slice(1).join(' ') || '',
+      dni: undefined,
       phone: apiProfessional.phone,
       location: apiProfessional.location,
       role: 'professional',
@@ -49,6 +50,7 @@ export function adaptUser(apiUser: APIProfessionalResponse['user'], apiProfessio
     email: apiUser.email,
     firstName: apiUser.firstName,
     lastName: apiUser.lastName,
+    dni: apiUser.dni,
     phone: apiUser.phone,
     birthDate: apiUser.birthDate ? parseDate(apiUser.birthDate) : undefined,
     location: apiUser.location,
@@ -130,7 +132,9 @@ export function adaptProfessional(apiProfessional: APIProfessionalResponse): Pro
     id: apiProfessional.id,
     userId: apiProfessional.userId,
     user: user,
+    professionalGroup: apiProfessional.professionalGroup,
     location: apiProfessional.location || apiProfessional.serviceLocations?.[0],
+    serviceLocations: apiProfessional.serviceLocations || [],
     bio: apiProfessional.bio || '',
     experienceYears: apiProfessional.experienceYears || 0,
     verified: apiProfessional.verified,
@@ -141,6 +145,7 @@ export function adaptProfessional(apiProfessional: APIProfessionalResponse): Pro
     hasLaborReferences: apiProfessional.hasLaborReferences,
     rating: apiProfessional.rating || 0,
     reviewCount: apiProfessional.reviewCount || apiProfessional._count?.reviews || 0,
+    contactRequestsCount: apiProfessional._count?.contactRequests || 0,
     createdAt: parseDate(apiProfessional.createdAt),
     updatedAt: parseDate(apiProfessional.updatedAt),
     documentation,
@@ -244,4 +249,3 @@ export function prepareUpdateProfessionalData(formData: any) {
 
   return data;
 }
-

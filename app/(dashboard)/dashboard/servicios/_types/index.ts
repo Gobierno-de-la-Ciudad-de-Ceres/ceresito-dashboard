@@ -154,6 +154,7 @@ export interface User {
   firstName: string;
   lastName: string;
   name?: string; // Para compatibilidad con NextAuth
+  dni?: string;
   phone?: string;
   birthDate?: Date;
   location?: string;
@@ -224,7 +225,9 @@ export interface Professional {
   id: string;
   userId: string;
   user?: User;
+  professionalGroup?: CategoryGroup;
   location?: string; // ubicación textual (ej: "Ceres")
+  serviceLocations?: string[];
   bio: string;
   experienceYears: number;
   verified: boolean;
@@ -235,6 +238,7 @@ export interface Professional {
   hasLaborReferences?: boolean;
   rating: number;
   reviewCount: number;
+  contactRequestsCount?: number;
   registrationType?: 'email' | 'google' | 'facebook'; // Cómo se registró el profesional
   createdAt: Date;
   updatedAt: Date;
