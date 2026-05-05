@@ -130,6 +130,7 @@ export interface APIProfessionalResponse {
     firstName: string;
     lastName: string;
     email: string;
+    dni?: string;
     phone?: string;
     birthDate?: string;
     location?: string;
@@ -238,6 +239,7 @@ export interface APIUserResponse {
   email: string;
   firstName: string;
   lastName: string;
+  dni?: string;
   phone?: string;
   birthDate?: string;
   location?: string;
@@ -1836,4 +1838,3 @@ export const apiClient = new ServicesAPIClient();
 
 // Exportar clase para testing o instancias personalizadas
 export default ServicesAPIClient;
-

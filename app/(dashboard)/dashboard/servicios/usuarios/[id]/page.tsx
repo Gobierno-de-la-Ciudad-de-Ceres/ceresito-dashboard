@@ -20,7 +20,8 @@ import {
   Shield,
   Loader2,
   AlertCircle,
-  Edit
+  Edit,
+  FileText
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -169,6 +170,13 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
                 <div className="flex items-center space-x-2">
                   <Mail className="h-4 w-4 text-muted-foreground" />
                   <p className="text-base">{user.email}</p>
+                </div>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">DNI</p>
+                <div className="flex items-center space-x-2">
+                  <FileText className="h-4 w-4 text-muted-foreground" />
+                  <p className="text-base">{user.dni || "No proporcionado"}</p>
                 </div>
               </div>
               {user.phone && (
