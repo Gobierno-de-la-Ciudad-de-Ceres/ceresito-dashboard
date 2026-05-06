@@ -4,6 +4,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -29,9 +30,11 @@ interface InteractionFromAPI {
 // No debe haber una definición local de ConversationViewProps aquí.
 
 export function RecentSales() {
+  const PAGE_SIZE = 6;
   const [interactions, setInteractions] = useState<InteractionFromAPI[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
   
   // Este estado debe coincidir exactamente con la prop 'details' de ConversationView
   const [conversationDetailsForModal, setConversationDetailsForModal] = useState<ConversationViewProps['details']>(null);
@@ -49,7 +52,8 @@ export function RecentSales() {
         return response.json();
       })
       .then((data: InteractionFromAPI[]) => {
-         setInteractions(data.slice(0, 6)); // Mostrar solo las primeras 6
+         setInteractions(data);
+         setCurrentPage(1);
       })
       .catch(fetchError => {
         console.error(fetchError);
@@ -78,6 +82,10 @@ export function RecentSales() {
     }
     return message.substring(0, maxLength) + "...";
   };
+
+  const totalPages = Math.max(1, Math.ceil(interactions.length / PAGE_SIZE));
+  const pageStart = (currentPage - 1) * PAGE_SIZE;
+  const pageInteractions = interactions.slice(pageStart, pageStart + PAGE_SIZE);
 
   const handleInteractionClick = (interaction: InteractionFromAPI) => {
     // Solo abrir el modal si hay un lastMessage y un conversation_id válidos
@@ -118,7 +126,7 @@ export function RecentSales() {
             ) : interactions.length === 0 ? (
               <p className="text-sm text-muted-foreground p-2">No hay interacciones recientes.</p>
             ) : (
-              interactions.map((interaction) => {
+              pageInteractions.map((interaction) => {
                 const isClickable = !!(interaction.lastMessage && interaction.lastMessage.conversation_id);
 
                 return (
@@ -153,6 +161,29 @@ export function RecentSales() {
              })
             )}
           </div>
+          {!isLoading && !error && interactions.length > PAGE_SIZE ? (
+            <div className="mt-3 flex items-center justify-between border-t pt-3">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                disabled={currentPage <= 1}
+              >
+                Anterior
+              </Button>
+              <span className="text-xs text-muted-foreground">
+                Página {currentPage} de {totalPages}
+              </span>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                disabled={currentPage >= totalPages}
+              >
+                Siguiente
+              </Button>
+            </div>
+          ) : null}
 
           {conversationDetailsForModal && (
             <DialogContent className="sm:max-w-lg md:max-w-xl lg:max-w-2xl max-h-[90vh] flex flex-col p-0">
