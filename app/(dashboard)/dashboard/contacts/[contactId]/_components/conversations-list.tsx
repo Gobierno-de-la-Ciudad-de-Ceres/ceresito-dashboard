@@ -35,7 +35,8 @@ export function ConversationsList({
 
   const handleSummaryClick = (summary: ConversationSummary) => {
     setSelectedConversationDetails({
-      contactId: contactId, // El contactId general de la página de detalles
+      // Forzar búsqueda estricta por conversationId para evitar fallback engañoso por contacto
+      contactId: null,
       conversationId: summary.conversation_id,
     });
     setSelectedConvDisplayName(summary.nombre || summary.telefono || `Conversación ID: ${summary.conversation_id}`);
