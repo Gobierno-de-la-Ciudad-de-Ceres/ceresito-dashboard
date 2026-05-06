@@ -43,32 +43,80 @@ export const ConversationView = ({ details }: ConversationViewProps) => {
   const scrollHeightBeforeLoad = useRef<number>(0);
   const pollingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const normalizeString = useCallback((value: unknown): string => {
+    return typeof value === 'string' ? value.trim() : '';
+  }, []);
+
+  const isHumanHandoffEvent = useCallback((msg: any, text: string): boolean => {
+    const ref = normalizeString(msg?.ref).toLowerCase();
+    const keyword = normalizeString(msg?.keyword).toLowerCase();
+    const answer = text.toLowerCase();
+    return (
+      ref.includes('handoff') ||
+      ref.includes('_event_') ||
+      keyword.includes('handoff') ||
+      keyword.includes('human_handoff') ||
+      answer.includes('conversación tomada por humano') ||
+      answer.includes('conversacion tomada por humano') ||
+      answer.includes('conversación devuelta al bot') ||
+      answer.includes('conversacion devuelta al bot')
+    );
+  }, [normalizeString]);
+
   const formatMessages = useCallback((apiMessages: any[]): ChatMessage[] => {
     return apiMessages
       .map(msg => {
-        let sender: 'user' | 'bot';
-        if (msg.ref?.startsWith('cc')) {
-          sender = 'user';
-        } else if (msg.ref?.startsWith('ans')) {
-          sender = 'bot';
-        } else if (msg.keyword && !msg.ref?.startsWith('ans')) {
-          sender = 'user';
-        } else {
-          sender = 'bot';
-        }
-        const answer = msg.answer || '';
-        if (answer.startsWith('__')) {
+        let sender: ChatMessage['sender'] = 'bot';
+        let kind: ChatMessage['kind'] = 'message';
+        const ref = normalizeString(msg?.ref).toLowerCase();
+        const keyword = normalizeString(msg?.keyword).toLowerCase();
+        const answer = normalizeString(msg?.answer);
+
+        if (!answer || answer.startsWith('__')) {
           return null;
+        }
+
+        if (isHumanHandoffEvent(msg, answer)) {
+          sender = 'system';
+          kind = 'event';
+        } else if (
+          ref.startsWith('human') ||
+          keyword.includes('human_message') ||
+          keyword.includes('agente_humano') ||
+          keyword.includes('asesor_humano')
+        ) {
+          sender = 'human';
+        } else if (ref.startsWith('cc')) {
+          sender = 'user';
+        } else if (ref.startsWith('ans')) {
+          sender = 'bot';
+        } else if (keyword && !ref.startsWith('ans')) {
+          sender = 'user';
         }
 
         return {
           id: msg.id, // Asegúrate que este id sea único para la key de React
           sender: sender,
+          kind,
           text: answer,
           timestamp: msg.createdAt
         };
       })
       .filter((msg): msg is ChatMessage => msg !== null && msg.text !== ''); // Type guard
+  }, [isHumanHandoffEvent, normalizeString]);
+
+  const inferHumanMode = useCallback((items: ChatMessage[]) => {
+    const handoffEvents = items
+      .filter((msg) => msg.sender === 'system' && msg.kind === 'event')
+      .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+
+    const lastHandoff = handoffEvents.at(-1);
+    if (!lastHandoff) return false;
+
+    const eventText = lastHandoff.text.toLowerCase();
+    if (eventText.includes('tomada por humano')) return true;
+    if (eventText.includes('devuelta al bot')) return false;
+    return false;
   }, []);
 
   const fetchConversationMessages = useCallback(
@@ -181,12 +229,17 @@ export const ConversationView = ({ details }: ConversationViewProps) => {
       setTotalPages(data.totalPages);
 
       if (opts?.merge) {
-        setMessages((prev) => mergeUniqueMessages(prev, formatted));
+        setMessages((prev) => {
+          const merged = mergeUniqueMessages(prev, formatted);
+          setIsHumanMode(inferHumanMode(merged));
+          return merged;
+        });
       } else {
         setMessages(formatted);
+        setIsHumanMode(inferHumanMode(formatted));
       }
     },
-    [details, fetchConversationMessages, formatMessages, mergeUniqueMessages]
+    [details, fetchConversationMessages, formatMessages, inferHumanMode, mergeUniqueMessages]
   );
 
   const startShortPolling = useCallback(() => {
@@ -249,6 +302,17 @@ export const ConversationView = ({ details }: ConversationViewProps) => {
 
       setOutgoingMessage('');
       setSendSuccess(payload?.message || 'Mensaje enviado correctamente.');
+      setMessages((prev) =>
+        mergeUniqueMessages(prev, [
+          {
+            id: `human-local-${Date.now()}`,
+            sender: 'human',
+            kind: 'message',
+            text: message,
+            timestamp: new Date().toISOString(),
+          },
+        ]),
+      );
       await refreshMessages();
       startShortPolling();
     } catch (err) {
@@ -256,7 +320,7 @@ export const ConversationView = ({ details }: ConversationViewProps) => {
     } finally {
       setIsSending(false);
     }
-  }, [clearPolling, details, isHumanMode, isSending, outgoingMessage, refreshMessages, startShortPolling]);
+  }, [clearPolling, details, isHumanMode, isSending, mergeUniqueMessages, outgoingMessage, refreshMessages, startShortPolling]);
 
   const handleToggleHandoff = useCallback(async () => {
     if (!details?.contactId || isUpdatingHandoff) return;
@@ -288,6 +352,20 @@ export const ConversationView = ({ details }: ConversationViewProps) => {
       }
 
       setIsHumanMode(!isHumanMode);
+      setMessages((prev) =>
+        mergeUniqueMessages(prev, [
+          {
+            id: `handoff-local-${Date.now()}`,
+            sender: 'system',
+            kind: 'event',
+            text:
+              targetAction === 'take'
+                ? 'Conversación tomada por humano'
+                : 'Conversación devuelta al bot',
+            timestamp: new Date().toISOString(),
+          },
+        ]),
+      );
       setSendSuccess(
         payload?.message ||
           (!isHumanMode ? 'Conversación tomada por humano.' : 'Conversación devuelta al bot.'),
@@ -297,7 +375,7 @@ export const ConversationView = ({ details }: ConversationViewProps) => {
     } finally {
       setIsUpdatingHandoff(false);
     }
-  }, [details, isHumanMode, isUpdatingHandoff]);
+  }, [details, isHumanMode, isUpdatingHandoff, mergeUniqueMessages]);
 
   const loadMoreMessages = useCallback(async () => {
     if (!details || isLoadingMore || currentPage >= totalPages) {
@@ -359,6 +437,7 @@ export const ConversationView = ({ details }: ConversationViewProps) => {
       .then(data => {
         const formatted = formatMessages(data.messages);
         setMessages(formatted);
+        setIsHumanMode(inferHumanMode(formatted));
         setCurrentPage(data.currentPage);
         setTotalPages(data.totalPages);
       })
@@ -374,7 +453,7 @@ export const ConversationView = ({ details }: ConversationViewProps) => {
             }
         });
       });
-  }, [clearPolling, details, formatMessages, fetchConversationMessages]);
+  }, [clearPolling, details, fetchConversationMessages, formatMessages, inferHumanMode]);
 
   useEffect(() => {
     const container = chatContainerRef.current;
@@ -420,16 +499,34 @@ export const ConversationView = ({ details }: ConversationViewProps) => {
         {messages.map((msg) => (
            <div
               key={msg.id} 
-              className={`flex flex-col ${msg.sender === 'user' ? 'items-end' : 'items-start'}`}
+              className={`flex flex-col ${
+                msg.sender === 'system'
+                  ? 'items-center'
+                  : msg.sender === 'user' || msg.sender === 'human'
+                    ? 'items-end'
+                    : 'items-start'
+              }`}
             >
-              <div
-                className={`p-2 px-3 rounded-lg max-w-[75%] break-words shadow-sm ${ 
-                  msg.sender === 'user' ? 'bg-blue-500 text-white rounded-br-none' : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-bl-none'
-                }`}
-              >
-                <p className="text-sm">{msg.text}</p>
-              </div>
-              <p className={`text-xs mt-1 ${msg.sender === 'user' ? 'text-right' : 'text-left'} text-gray-500 dark:text-gray-400`}>
+              {msg.sender === 'system' ? (
+                <p className="text-xs text-center text-muted-foreground bg-muted px-3 py-1 rounded-full">
+                  {msg.text}
+                </p>
+              ) : (
+                <div
+                  className={`p-2 px-3 rounded-lg max-w-[75%] break-words shadow-sm ${ 
+                    msg.sender === 'user'
+                      ? 'bg-blue-500 text-white rounded-br-none'
+                      : msg.sender === 'human'
+                        ? 'bg-amber-500 text-white rounded-br-none'
+                        : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-bl-none'
+                  }`}
+                >
+                  <p className="text-sm">{msg.text}</p>
+                </div>
+              )}
+              <p className={`text-xs mt-1 ${
+                msg.sender === 'user' || msg.sender === 'human' ? 'text-right' : 'text-left'
+              } text-gray-500 dark:text-gray-400`}>
                 {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </p>
             </div>
