@@ -480,8 +480,22 @@ export const ConversationView = ({ details }: ConversationViewProps) => {
 
   return (
     <div className="flex h-full flex-col gap-3 p-1">
-      <div ref={chatContainerRef} className="mt-1 p-1 border rounded-md max-h-[500px] h-[500px] overflow-y-auto flex flex-col-reverse bg-muted/20">
+      <div ref={chatContainerRef} className="mt-1 p-1 border rounded-md max-h-[500px] h-[500px] overflow-y-auto flex flex-col bg-muted/20">
         <div className="space-y-3 p-3">
+        {!isLoading && currentPage < totalPages && (
+          <div className="flex justify-center">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={loadMoreMessages}
+              disabled={isLoadingMore}
+            >
+              {isLoadingMore ? 'Cargando...' : 'Cargar mensajes anteriores'}
+            </Button>
+          </div>
+        )}
+
         {isLoading && messages.length === 0 && (
             Array.from({ length: 5 }).map((_, index) => (
                 <div key={`skel-${index}`} className={`flex ${index % 2 === 0 ? 'justify-end' : 'justify-start'}`}>
