@@ -31,6 +31,7 @@ interface InteractionFromAPI {
 
 export function RecentSales() {
   const PAGE_SIZE = 6;
+  const LAST_INTERACTIONS_LIMIT = 300;
   const [interactions, setInteractions] = useState<InteractionFromAPI[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -41,10 +42,19 @@ export function RecentSales() {
   const [displayNameForModal, setDisplayNameForModal] = useState<string>("");
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  const toDisplayDate = (value: string): Date => {
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) return new Date();
+    if (value.endsWith("Z")) {
+      return new Date(parsed.getTime() + parsed.getTimezoneOffset() * 60_000);
+    }
+    return parsed;
+  };
+
   useEffect(() => {
     setIsLoading(true);
     setError(null);
-    fetch('/api/core/contacts/last-interactions', { cache: 'no-store' })
+    fetch(`/api/core/contacts/last-interactions?limit=${LAST_INTERACTIONS_LIMIT}`, { cache: 'no-store' })
       .then(response => {
         if (!response.ok) {
           throw new Error('Error al obtener las últimas interacciones');
@@ -153,7 +163,7 @@ export function RecentSales() {
                   </div>
                   {interaction.lastMessage?.createdAt && (
                      <p className="text-xs text-muted-foreground self-start flex-shrink-0 whitespace-nowrap">
-                       {formatDistanceToNow(new Date(interaction.lastMessage.createdAt), { addSuffix: true, locale: es })}
+                       {formatDistanceToNow(toDisplayDate(interaction.lastMessage.createdAt), { addSuffix: true, locale: es })}
                      </p>
                   )}
                 </div>

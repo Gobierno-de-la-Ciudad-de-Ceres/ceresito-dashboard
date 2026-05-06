@@ -502,7 +502,7 @@ export const ConversationView = ({ details }: ConversationViewProps) => {
               className={`flex flex-col ${
                 msg.sender === 'system'
                   ? 'items-center'
-                  : msg.sender === 'user' || msg.sender === 'human'
+                  : msg.sender === 'human'
                     ? 'items-end'
                     : 'items-start'
               }`}
@@ -514,18 +514,18 @@ export const ConversationView = ({ details }: ConversationViewProps) => {
               ) : (
                 <div
                   className={`p-2 px-3 rounded-lg max-w-[75%] break-words shadow-sm ${ 
-                    msg.sender === 'user'
-                      ? 'bg-blue-500 text-white rounded-br-none'
-                      : msg.sender === 'human'
+                    msg.sender === 'human'
                         ? 'bg-amber-500 text-white rounded-br-none'
-                        : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-bl-none'
+                        : msg.sender === 'bot'
+                          ? 'bg-blue-500 text-white rounded-bl-none'
+                          : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-bl-none'
                   }`}
                 >
                   <p className="text-sm">{msg.text}</p>
                 </div>
               )}
               <p className={`text-xs mt-1 ${
-                msg.sender === 'user' || msg.sender === 'human' ? 'text-right' : 'text-left'
+                msg.sender === 'human' ? 'text-right' : 'text-left'
               } text-gray-500 dark:text-gray-400`}>
                 {formatMessageTime(msg.timestamp)}
               </p>
