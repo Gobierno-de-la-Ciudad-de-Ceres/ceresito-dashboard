@@ -32,6 +32,8 @@ export function ConversationsList({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedConversationDetails, setSelectedConversationDetails] = useState<ConversationViewProps['details']>(null);
   const [selectedConvDisplayName, setSelectedConvDisplayName] = useState<string>("");
+  const effectiveTotalPages = Math.max(totalPages, 1);
+  const showPagination = totalConversations > conversationSummaries.length || effectiveTotalPages > 1;
 
   const handleSummaryClick = (summary: ConversationSummary) => {
     setSelectedConversationDetails({
@@ -83,7 +85,7 @@ export function ConversationsList({
           )}
           {loading && <p className="text-center py-4 text-muted-foreground">Loading conversation summaries...</p>}
         </CardContent>
-        {totalPages > 1 && !loading && (
+        {showPagination && !loading && (
           <CardFooter>
             <div className="flex w-full items-center justify-between gap-2">
               <Button
@@ -94,11 +96,11 @@ export function ConversationsList({
                 Anterior
               </Button>
               <span className="text-sm text-muted-foreground">
-                Página {currentPage} de {totalPages}
+                Página {currentPage} de {effectiveTotalPages}
               </span>
               <Button
                 onClick={() => onPageChange(currentPage + 1)}
-                disabled={currentPage >= totalPages}
+                disabled={currentPage >= effectiveTotalPages}
                 variant="outline"
               >
                 Siguiente

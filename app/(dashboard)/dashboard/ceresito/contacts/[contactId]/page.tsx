@@ -92,8 +92,10 @@ export default function ContactDetailPage() {
 
       setConversationSummaries(apiResponse.data);
       setConvCurrentPage(apiResponse.currentPage);
-      setConvTotalPages(apiResponse.pageCount);
-      setTotalConvCount(apiResponse.total);
+      const total = Number.isFinite(apiResponse.total) ? apiResponse.total : 0;
+      const computedPages = Math.max(1, Math.ceil(total / CONVERSATIONS_PAGE_SIZE));
+      setConvTotalPages(Math.max(apiResponse.pageCount || 1, computedPages));
+      setTotalConvCount(total);
     } catch (e: any) {
       console.error("Failed to fetch conversation summaries:", e);
     } finally {
