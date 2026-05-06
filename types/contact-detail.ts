@@ -34,9 +34,10 @@ export interface ContactDetail {
 // Representa un mensaje individual dentro de una conversación detallada
 export interface ChatMessage {
   id: string | number; // ID del mensaje
-  sender: 'user' | 'bot';
+  sender: 'user' | 'bot' | 'human' | 'system';
   text: string;
   timestamp: string; // Fecha del mensaje
+  kind?: 'message' | 'event';
   // ... otros campos relevantes del mensaje si los hay (ej. attachments, type)
 }
 
