@@ -220,6 +220,19 @@ export const ConversationView = ({ details }: ConversationViewProps) => {
     );
   }, []);
 
+  const formatMessageTime = useCallback((value: string) => {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '--:--';
+    if (typeof value === 'string' && value.endsWith('Z')) {
+      return date.toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZone: 'UTC',
+      });
+    }
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }, []);
+
   const refreshMessages = useCallback(
     async (opts?: { merge?: boolean }) => {
       if (!details) return;
@@ -352,20 +365,7 @@ export const ConversationView = ({ details }: ConversationViewProps) => {
       }
 
       setIsHumanMode(!isHumanMode);
-      setMessages((prev) =>
-        mergeUniqueMessages(prev, [
-          {
-            id: `handoff-local-${Date.now()}`,
-            sender: 'system',
-            kind: 'event',
-            text:
-              targetAction === 'take'
-                ? 'Conversación tomada por humano'
-                : 'Conversación devuelta al bot',
-            timestamp: new Date().toISOString(),
-          },
-        ]),
-      );
+      await refreshMessages({ merge: true });
       setSendSuccess(
         payload?.message ||
           (!isHumanMode ? 'Conversación tomada por humano.' : 'Conversación devuelta al bot.'),
@@ -375,7 +375,7 @@ export const ConversationView = ({ details }: ConversationViewProps) => {
     } finally {
       setIsUpdatingHandoff(false);
     }
-  }, [details, isHumanMode, isUpdatingHandoff, mergeUniqueMessages]);
+  }, [details, isHumanMode, isUpdatingHandoff, refreshMessages]);
 
   const loadMoreMessages = useCallback(async () => {
     if (!details || isLoadingMore || currentPage >= totalPages) {
@@ -527,7 +527,7 @@ export const ConversationView = ({ details }: ConversationViewProps) => {
               <p className={`text-xs mt-1 ${
                 msg.sender === 'user' || msg.sender === 'human' ? 'text-right' : 'text-left'
               } text-gray-500 dark:text-gray-400`}>
-                {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                {formatMessageTime(msg.timestamp)}
               </p>
             </div>
           ))}

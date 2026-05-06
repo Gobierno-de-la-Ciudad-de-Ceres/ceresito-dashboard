@@ -5,7 +5,6 @@ import { useParams } from "next/navigation";
 import BreadCrumb from "@/components/breadcrumb";
 import { Heading } from "@/components/ui/heading";
 import { Separator } from "@/components/ui/separator";
-import { Button } from "@/components/ui/button";
 import { 
   ContactDetail, 
   ConversationSummary,
@@ -81,7 +80,8 @@ export default function ContactDetailPage() {
 
   // Fetch conversations
   const fetchConversations = useCallback(async (pageToFetch: number) => {
-    if (!contactId || (pageToFetch > convCurrentPage && pageToFetch > convTotalPages && pageToFetch !== 1)) return;
+    if (!contactId) return;
+    if (pageToFetch < 1) return;
     setLoadingConv(true);
     try {
       const response = await fetch(`/api/core/contacts/${contactId}/conversations?page=${pageToFetch}&limit=${CONVERSATIONS_PAGE_SIZE}`);
@@ -90,18 +90,16 @@ export default function ContactDetailPage() {
       }
       const apiResponse: PaginatedConversationSummaries = await response.json();
       
-      setConversationSummaries((prev: ConversationSummary[]) => 
-        pageToFetch === 1 ? apiResponse.data : [...prev, ...apiResponse.data]
-      );
+      setConversationSummaries(apiResponse.data);
       setConvCurrentPage(apiResponse.currentPage);
       setConvTotalPages(apiResponse.pageCount);
-      if(pageToFetch === 1 || !totalConvCount) setTotalConvCount(apiResponse.total);
+      setTotalConvCount(apiResponse.total);
     } catch (e: any) {
       console.error("Failed to fetch conversation summaries:", e);
     } finally {
       setLoadingConv(false);
     }
-  }, [contactId, convCurrentPage, convTotalPages, totalConvCount]);
+  }, [contactId]);
 
   // Fetch history
   const fetchHistory = useCallback(async (pageToFetch: number) => {
@@ -152,7 +150,6 @@ export default function ContactDetailPage() {
     return <div className="p-8"><p>Contact not found.</p></div>;
   }
 
-  const hasMoreConv = convCurrentPage < convTotalPages;
   const hasMoreHist = historyCurrentPage < historyTotalPages;
 
   return (
@@ -174,8 +171,9 @@ export default function ContactDetailPage() {
       <ConversationsList 
         conversationSummaries={conversationSummaries} 
         loading={loadingConv} 
-        onLoadMore={() => fetchConversations(convCurrentPage + 1)} 
-        hasMore={hasMoreConv}
+        onPageChange={fetchConversations}
+        currentPage={convCurrentPage}
+        totalPages={convTotalPages}
         totalConversations={totalConvCount} 
         contactId={parseInt(contactId)}
       />
