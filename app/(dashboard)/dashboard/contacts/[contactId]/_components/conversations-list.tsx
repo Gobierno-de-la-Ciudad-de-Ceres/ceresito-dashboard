@@ -12,8 +12,9 @@ import { Eye } from "lucide-react"; // Icono para el botón de ver
 interface ConversationsListProps {
   conversationSummaries: ConversationSummary[];
   loading: boolean;
-  onLoadMore: () => void;
-  hasMore: boolean;
+  onPageChange: (page: number) => void;
+  currentPage: number;
+  totalPages: number;
   totalConversations: number;
   contactId: number; // Necesario para pasar a ConversationView
 }
@@ -21,8 +22,9 @@ interface ConversationsListProps {
 export function ConversationsList({ 
   conversationSummaries, 
   loading, 
-  onLoadMore, 
-  hasMore,
+  onPageChange,
+  currentPage,
+  totalPages,
   totalConversations,
   contactId
 }: ConversationsListProps) {
@@ -81,11 +83,27 @@ export function ConversationsList({
           )}
           {loading && <p className="text-center py-4 text-muted-foreground">Loading conversation summaries...</p>}
         </CardContent>
-        {hasMore && !loading && conversationSummaries.length > 0 && (
+        {totalPages > 1 && !loading && (
           <CardFooter>
-            <Button onClick={onLoadMore} className="w-full" variant="outline">
-              Load More Summaries
-            </Button>
+            <div className="flex w-full items-center justify-between gap-2">
+              <Button
+                onClick={() => onPageChange(currentPage - 1)}
+                disabled={currentPage <= 1}
+                variant="outline"
+              >
+                Anterior
+              </Button>
+              <span className="text-sm text-muted-foreground">
+                Página {currentPage} de {totalPages}
+              </span>
+              <Button
+                onClick={() => onPageChange(currentPage + 1)}
+                disabled={currentPage >= totalPages}
+                variant="outline"
+              >
+                Siguiente
+              </Button>
+            </div>
           </CardFooter>
         )}
       </Card>
