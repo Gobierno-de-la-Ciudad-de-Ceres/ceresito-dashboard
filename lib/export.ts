@@ -2,15 +2,57 @@ import { type Table } from "@tanstack/react-table";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
+type ExportColumnId = string;
+
 export function formatDate(
   date: Date | string | number,
   opts: Intl.DateTimeFormatOptions = {}
 ) {
+  const parsed = new Date(date);
+  if (Number.isNaN(parsed.getTime())) {
+    return String(date);
+  }
+
   return new Intl.DateTimeFormat("es-ES", {
     month: opts.month ?? "long",
     day: opts.day ?? "numeric",
     ...opts,
-  }).format(new Date(date));
+  }).format(parsed);
+}
+
+function formatCellForExport(header: ExportColumnId, cellValue: unknown): string {
+  if (cellValue === null || cellValue === undefined) return "";
+
+  if (header === "fecha") {
+    return formatDate(cellValue as string | number | Date);
+  }
+
+  if (typeof cellValue === "object") {
+    return JSON.stringify(cellValue);
+  }
+
+  return String(cellValue);
+}
+
+function getExportRows<TData>(
+  table: Table<TData>,
+  onlySelected: boolean,
+) {
+  if (onlySelected) {
+    return table.getFilteredSelectedRowModel().rows;
+  }
+
+  return table.getPrePaginationRowModel().rows;
+}
+
+function getExportHeaders<TData>(
+  table: Table<TData>,
+  excludeColumns: ExportColumnId[],
+) {
+  return table
+    .getAllLeafColumns()
+    .map((column) => column.id)
+    .filter((id) => !excludeColumns.includes(id) || id === "detalle");
 }
 
 export function exportTableToCSV<TData>(
@@ -21,33 +63,32 @@ export function exportTableToCSV<TData>(
     onlySelected?: boolean;
   } = {}
 ): void {
-  const { filename = "reclamos", excludeColumns = ["select", "actions", "estado"], onlySelected = false } = opts;
+  const {
+    filename = "reclamos",
+    excludeColumns = ["select", "actions", "estado"],
+    onlySelected = false,
+  } = opts;
 
-  const headers = table
-    .getAllLeafColumns()
-    .map((column) => column.id)
-    .filter((id) => !excludeColumns.includes(id as any) || id === "detalle");
+  const headers = getExportHeaders(table, excludeColumns as ExportColumnId[]);
+  const rows = getExportRows(table, onlySelected);
+
+  if (rows.length === 0) {
+    throw new Error("No hay filas para exportar.");
+  }
 
   const csvContent = [
     headers.join(","),
-    ...(onlySelected
-      ? table.getFilteredSelectedRowModel().rows
-      : table.getRowModel().rows
-    ).map((row) =>
+    ...rows.map((row) =>
       headers
         .map((header) => {
-          const cellValue = row.getValue(header);
-          const formattedValue =
-            header === "fecha" ? formatDate(cellValue as string | number | Date) : cellValue;
-          return typeof formattedValue === "string"
-            ? `"${formattedValue.replace(/"/g, '""')}"`
-            : formattedValue;
+          const formattedValue = formatCellForExport(header, row.getValue(header));
+          return `"${formattedValue.replace(/"/g, '""')}"`;
         })
         .join(",")
     ),
   ].join("\n");
 
-  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const blob = new Blob(["\uFEFF", csvContent], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.setAttribute("href", url);
@@ -56,30 +97,11 @@ export function exportTableToCSV<TData>(
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 }
 
 export function exportToPDF<TData>(table: Table<TData>) {
-  const excludeColumns = ["select", "actions", "estado"];
-  const headers = table
-    .getAllLeafColumns()
-    .map(column => column.id)
-    .filter(id => !excludeColumns.includes(id as any) || id === "detalle");
-
-  const rows = table.getRowModel().rows.map(row =>
-    headers.map(header => {
-      const cellValue = row.getValue(header);
-      const formattedValue = header === "fecha" ? formatDate(cellValue as string | number | Date) : cellValue;
-      return String(formattedValue);
-    })
-  );
-
-  const doc = new jsPDF();
-  autoTable(doc, {
-    head: [headers],
-    body: rows,
-  });
-
-  doc.save('reclamos.pdf');
+  exportTableToPDF(table, { filename: "reclamos" });
 }
 
 export function exportTableToPDF<TData>(
@@ -90,28 +112,31 @@ export function exportTableToPDF<TData>(
     onlySelected?: boolean;
   } = {}
 ): void {
-  const { filename = "reclamos", excludeColumns = ["select", "actions", "estado"] } = opts;
+  const {
+    filename = "reclamos",
+    excludeColumns = ["select", "actions", "estado"],
+    onlySelected = false,
+  } = opts;
 
   const selectedRows = table.getFilteredSelectedRowModel().rows;
   const hasSelectedRows = selectedRows.length > 0;
+  const rows = getExportRows(table, onlySelected || hasSelectedRows);
 
-  const headers = table
-    .getAllLeafColumns()
-    .map(column => column.id)
-    .filter(id => !excludeColumns.includes(id as any) || id === "detalle");
+  if (rows.length === 0) {
+    throw new Error("No hay filas para exportar.");
+  }
 
-  const rows = (hasSelectedRows ? selectedRows : table.getRowModel().rows).map(row =>
-    headers.map(header => {
-      const cellValue = row.getValue(header);
-      const formattedValue = header === "fecha" ? formatDate(cellValue as string | number | Date) : cellValue;
-      return String(formattedValue);
-    })
+  const headers = getExportHeaders(table, excludeColumns as ExportColumnId[]);
+  const body = rows.map((row) =>
+    headers.map((header) => formatCellForExport(header, row.getValue(header))),
   );
 
-  const doc = new jsPDF();
+  const doc = new jsPDF({ orientation: headers.length > 4 ? "landscape" : "portrait" });
   autoTable(doc, {
     head: [headers],
-    body: rows,
+    body,
+    styles: { fontSize: 8, cellWidth: "wrap" },
+    headStyles: { fillColor: [22, 101, 52] },
   });
 
   doc.save(`${filename}.pdf`);

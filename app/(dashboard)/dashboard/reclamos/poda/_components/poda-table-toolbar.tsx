@@ -16,6 +16,30 @@ interface PodaTableToolbarProps {
 export function PodaTableToolbar({ table }: PodaTableToolbarProps) {
   const selectedRowCount = table.getFilteredSelectedRowModel().rows.length
 
+  const handleExportCsv = () => {
+    try {
+      exportTableToCSV(table, {
+        filename: 'reclamos_poda',
+        excludeColumns: ['select', 'actions'],
+      })
+    } catch (error) {
+      console.error('[PodaTableToolbar] Error exportando CSV', error)
+      window.alert(error instanceof Error ? error.message : 'No se pudo exportar a Excel.')
+    }
+  }
+
+  const handleExportPdf = () => {
+    try {
+      exportTableToPDF(table, {
+        filename: 'reclamos_poda',
+        excludeColumns: ['select', 'actions'],
+      })
+    } catch (error) {
+      console.error('[PodaTableToolbar] Error exportando PDF', error)
+      window.alert(error instanceof Error ? error.message : 'No se pudo exportar a PDF.')
+    }
+  }
+
   return (
     <div className="flex items-center justify-between">
       <div className="flex flex-1 items-center space-x-2">
@@ -26,13 +50,7 @@ export function PodaTableToolbar({ table }: PodaTableToolbarProps) {
         <Button
           variant="outline"
           size="sm"
-          onClick={() =>
-            exportTableToCSV(table, {
-              filename: 'reclamos_poda',
-              // Aquí puedes excluir columnas específicas de la exportación CSV si es necesario
-              // excludeColumns: ['select', 'actions'], 
-            })
-          }
+          onClick={handleExportCsv}
         >
           <DownloadIcon className="mr-2 size-4" aria-hidden="true" />
           Exportar a Excel {selectedRowCount > 0 ? `(${selectedRowCount})` : ''}
@@ -40,12 +58,7 @@ export function PodaTableToolbar({ table }: PodaTableToolbarProps) {
         <Button
           variant="outline"
           size="sm"
-          onClick={() =>
-            exportTableToPDF(table, {
-              filename: 'reclamos_poda',
-              // Aquí puedes excluir columnas específicas de la exportación PDF si es necesario
-            })
-          }
+          onClick={handleExportPdf}
         >
           <DownloadIcon className="mr-2 size-4" aria-hidden="true" />
           Exportar a PDF {selectedRowCount > 0 ? `(${selectedRowCount})` : ''}
