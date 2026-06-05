@@ -80,7 +80,7 @@ export default function PodaPage() {
               telefono: apiItem.telefono || 'N/A',
               ubicacion: apiItem.ubicacion || 'N/A',
               barrio: apiItem.barrio || 'N/A',
-              imagen: apiItem.imagenURL || undefined,
+              imagen: apiItem.imagenURL || apiItem.imagen || undefined,
               estado: apiItem.estado || 'pendiente',
               reclamo: 'Reclamo de Poda',
               detalle: apiItem.detalle || '',

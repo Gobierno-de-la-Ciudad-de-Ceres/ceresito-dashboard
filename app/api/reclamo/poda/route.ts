@@ -3,6 +3,8 @@ import { NextResponse } from 'next/server';
 import { GoogleSpreadsheet } from 'google-spreadsheet';
 import { JWT } from 'google-auth-library';
 import fs from 'fs';
+import { getPodaSheet } from '@/lib/podaSheet';
+
 const CREDENTIALS = JSON.parse(fs.readFileSync('./credenciales.json', 'utf-8'));
 
 
@@ -20,7 +22,7 @@ const doc = new GoogleSpreadsheet('1eqgDBQtHqHmZcBF7IzK7-GgOQBSMBlmI9ZR667v4UF8'
 export async function GET() {
   try {
     await doc.loadInfo();
-    const sheet = doc.sheetsByIndex[7];
+    const sheet = getPodaSheet(doc);
     await sheet.loadHeaderRow();
     const rows = await sheet.getRows();
     const data = rows.map(row => ({
