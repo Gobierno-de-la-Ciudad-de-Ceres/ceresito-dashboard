@@ -1,8 +1,21 @@
 import { type Table } from "@tanstack/react-table";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import * as XLSX from "xlsx";
 
 type ExportColumnId = string;
+
+const COLUMN_LABELS: Record<string, string> = {
+  imagen: "Imagen",
+  fecha: "Fecha",
+  nombre: "Nombre",
+  ubicacion: "Ubicación",
+  barrio: "Barrio",
+  telefono: "Teléfono",
+  detalle: "Detalle",
+  reclamo: "Reclamo",
+  estado: "Estado",
+};
 
 export function formatDate(
   date: Date | string | number,
@@ -20,29 +33,22 @@ export function formatDate(
   }).format(parsed);
 }
 
+function sanitizeCellValue(value: string): string {
+  return value.replace(/[\r\n\u2028\u2029]+/g, " ").replace(/\s+/g, " ").trim();
+}
+
 function formatCellForExport(header: ExportColumnId, cellValue: unknown): string {
   if (cellValue === null || cellValue === undefined) return "";
 
   if (header === "fecha") {
-    return formatDate(cellValue as string | number | Date);
+    return sanitizeCellValue(formatDate(cellValue as string | number | Date));
   }
 
   if (typeof cellValue === "object") {
-    return JSON.stringify(cellValue);
+    return sanitizeCellValue(JSON.stringify(cellValue));
   }
 
-  return String(cellValue);
-}
-
-function getExportRows<TData>(
-  table: Table<TData>,
-  onlySelected: boolean,
-) {
-  if (onlySelected) {
-    return table.getFilteredSelectedRowModel().rows;
-  }
-
-  return table.getPrePaginationRowModel().rows;
+  return sanitizeCellValue(String(cellValue));
 }
 
 function getExportHeaders<TData>(
@@ -55,6 +61,49 @@ function getExportHeaders<TData>(
     .filter((id) => !excludeColumns.includes(id) || id === "detalle");
 }
 
+function resolveExportRows<TData>(
+  table: Table<TData>,
+  onlySelected = false,
+) {
+  const hasSelectedRows = table.getFilteredSelectedRowModel().rows.length > 0;
+
+  if (onlySelected || hasSelectedRows) {
+    return table.getFilteredSelectedRowModel().rows;
+  }
+
+  return table.getPrePaginationRowModel().rows;
+}
+
+function buildExportMatrix<TData>(
+  table: Table<TData>,
+  opts: {
+    excludeColumns?: (keyof TData | "select" | "actions")[];
+    onlySelected?: boolean;
+  } = {},
+) {
+  const {
+    excludeColumns = ["select", "actions", "estado"],
+    onlySelected = false,
+  } = opts;
+
+  const headers = getExportHeaders(table, excludeColumns as ExportColumnId[]);
+  const rows = resolveExportRows(table, onlySelected);
+
+  if (rows.length === 0) {
+    throw new Error("No hay filas para exportar.");
+  }
+
+  const headerLabels = headers.map(
+    (header) => COLUMN_LABELS[header] ?? header,
+  );
+
+  const body = rows.map((row) =>
+    headers.map((header) => formatCellForExport(header, row.getValue(header))),
+  );
+
+  return { headers, headerLabels, body, rows };
+}
+
 export function exportTableToCSV<TData>(
   table: Table<TData>,
   opts: {
@@ -63,32 +112,21 @@ export function exportTableToCSV<TData>(
     onlySelected?: boolean;
   } = {}
 ): void {
-  const {
-    filename = "reclamos",
-    excludeColumns = ["select", "actions", "estado"],
-    onlySelected = false,
-  } = opts;
-
-  const headers = getExportHeaders(table, excludeColumns as ExportColumnId[]);
-  const rows = getExportRows(table, onlySelected);
-
-  if (rows.length === 0) {
-    throw new Error("No hay filas para exportar.");
-  }
+  const { filename = "reclamos", ...matrixOpts } = opts;
+  const { headerLabels, body } = buildExportMatrix(table, matrixOpts);
 
   const csvContent = [
-    headers.join(","),
-    ...rows.map((row) =>
-      headers
-        .map((header) => {
-          const formattedValue = formatCellForExport(header, row.getValue(header));
-          return `"${formattedValue.replace(/"/g, '""')}"`;
-        })
-        .join(",")
+    headerLabels.join(";"),
+    ...body.map((row) =>
+      row
+        .map((value) => `"${value.replace(/"/g, '""')}"`)
+        .join(";"),
     ),
-  ].join("\n");
+  ].join("\r\n");
 
-  const blob = new Blob(["\uFEFF", csvContent], { type: "text/csv;charset=utf-8;" });
+  const blob = new Blob(["\uFEFF", csvContent], {
+    type: "text/csv;charset=utf-8;",
+  });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.setAttribute("href", url);
@@ -98,6 +136,38 @@ export function exportTableToCSV<TData>(
   link.click();
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
+}
+
+export function exportTableToExcel<TData>(
+  table: Table<TData>,
+  opts: {
+    filename?: string;
+    sheetName?: string;
+    excludeColumns?: (keyof TData | "select" | "actions")[];
+    onlySelected?: boolean;
+  } = {}
+): void {
+  const {
+    filename = "reclamos",
+    sheetName = "Reclamos",
+    ...matrixOpts
+  } = opts;
+
+  const { headerLabels, body } = buildExportMatrix(table, matrixOpts);
+  const rowsAsObjects = body.map((row) =>
+    Object.fromEntries(
+      headerLabels.map((label, index) => [label, row[index] ?? ""]),
+    ),
+  );
+
+  const worksheet = XLSX.utils.json_to_sheet(rowsAsObjects);
+  worksheet["!cols"] = headerLabels.map((label) => ({
+    wch: Math.max(label.length, 18),
+  }));
+
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
+  XLSX.writeFile(workbook, `${filename}.xlsx`);
 }
 
 export function exportToPDF<TData>(table: Table<TData>) {
@@ -112,28 +182,15 @@ export function exportTableToPDF<TData>(
     onlySelected?: boolean;
   } = {}
 ): void {
-  const {
-    filename = "reclamos",
-    excludeColumns = ["select", "actions", "estado"],
-    onlySelected = false,
-  } = opts;
+  const { filename = "reclamos", ...matrixOpts } = opts;
+  const { headerLabels, body } = buildExportMatrix(table, matrixOpts);
 
-  const selectedRows = table.getFilteredSelectedRowModel().rows;
-  const hasSelectedRows = selectedRows.length > 0;
-  const rows = getExportRows(table, onlySelected || hasSelectedRows);
+  const doc = new jsPDF({
+    orientation: headerLabels.length > 4 ? "landscape" : "portrait",
+  });
 
-  if (rows.length === 0) {
-    throw new Error("No hay filas para exportar.");
-  }
-
-  const headers = getExportHeaders(table, excludeColumns as ExportColumnId[]);
-  const body = rows.map((row) =>
-    headers.map((header) => formatCellForExport(header, row.getValue(header))),
-  );
-
-  const doc = new jsPDF({ orientation: headers.length > 4 ? "landscape" : "portrait" });
   autoTable(doc, {
-    head: [headers],
+    head: [headerLabels],
     body,
     styles: { fontSize: 8, cellWidth: "wrap" },
     headStyles: { fillColor: [22, 101, 52] },

@@ -3,7 +3,7 @@
 import { DownloadIcon } from '@radix-ui/react-icons'
 import { type Table } from '@tanstack/react-table'
 
-import { exportTableToCSV, exportTableToPDF } from '@/lib/export'
+import { exportTableToExcel, exportTableToPDF } from '@/lib/export'
 import { Button } from '@/components/ui/button'
 import { DataTableViewOptions } from '@/components/data-table/data-table-view-options'
 
@@ -16,14 +16,16 @@ interface PodaTableToolbarProps {
 export function PodaTableToolbar({ table }: PodaTableToolbarProps) {
   const selectedRowCount = table.getFilteredSelectedRowModel().rows.length
 
-  const handleExportCsv = () => {
+  const handleExportExcel = () => {
     try {
-      exportTableToCSV(table, {
+      exportTableToExcel(table, {
         filename: 'reclamos_poda',
+        sheetName: 'Poda',
         excludeColumns: ['select', 'actions'],
+        onlySelected: selectedRowCount > 0,
       })
     } catch (error) {
-      console.error('[PodaTableToolbar] Error exportando CSV', error)
+      console.error('[PodaTableToolbar] Error exportando Excel', error)
       window.alert(error instanceof Error ? error.message : 'No se pudo exportar a Excel.')
     }
   }
@@ -33,6 +35,7 @@ export function PodaTableToolbar({ table }: PodaTableToolbarProps) {
       exportTableToPDF(table, {
         filename: 'reclamos_poda',
         excludeColumns: ['select', 'actions'],
+        onlySelected: selectedRowCount > 0,
       })
     } catch (error) {
       console.error('[PodaTableToolbar] Error exportando PDF', error)
@@ -50,7 +53,7 @@ export function PodaTableToolbar({ table }: PodaTableToolbarProps) {
         <Button
           variant="outline"
           size="sm"
-          onClick={handleExportCsv}
+          onClick={handleExportExcel}
         >
           <DownloadIcon className="mr-2 size-4" aria-hidden="true" />
           Exportar a Excel {selectedRowCount > 0 ? `(${selectedRowCount})` : ''}
