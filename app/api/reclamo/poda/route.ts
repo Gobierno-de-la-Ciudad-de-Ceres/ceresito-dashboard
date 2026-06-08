@@ -1,4 +1,3 @@
-"use server"
 import { NextResponse } from 'next/server';
 import { GoogleSpreadsheet } from 'google-spreadsheet';
 import { JWT } from 'google-auth-library';
@@ -18,6 +17,8 @@ const serviceAccountAuth = new JWT({
 
 const doc = new GoogleSpreadsheet('1eqgDBQtHqHmZcBF7IzK7-GgOQBSMBlmI9ZR667v4UF8', serviceAccountAuth);
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export async function GET() {
   try {
@@ -35,7 +36,11 @@ export async function GET() {
         imagenURL: row.get('Imagen'),
         estado: row.get('Estado'),
       }));
-      return NextResponse.json(data);
+      return NextResponse.json(data, {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate',
+        },
+      });
   } catch (error) {
     console.error('Error fetching data:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });

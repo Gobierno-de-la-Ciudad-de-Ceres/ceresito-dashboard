@@ -45,6 +45,15 @@ import { PodaTable } from "./_components/poda-table";
 import { getPodaColumns } from "./_components/poda-table-columns";
 import { Shell } from "@/components/shell";
 
+function parsePodaFecha(fecha: string | undefined): number {
+  if (!fecha) return 0;
+  const [datePart, timePart = "0:0:0"] = fecha.split(" - ");
+  const [day, month, year] = datePart.split("/").map((value) => parseInt(value, 10));
+  const [hours, minutes, seconds] = timePart.split(":").map((value) => parseInt(value, 10));
+  if (!day || !month || !year) return 0;
+  return new Date(year, month - 1, day, hours || 0, minutes || 0, seconds || 0).getTime();
+}
+
 export default function PodaPage() {
   const [reclamos, setReclamos] = useState<Reclamo[]>([]);
   const [loading, setLoading] = useState(true);
@@ -55,7 +64,7 @@ export default function PodaPage() {
     async function fetchReclamos() {
       setLoading(true);
       try {
-        const response = await fetch('/api/reclamo/poda');
+        const response = await fetch('/api/reclamo/poda', { cache: 'no-store' });
         const dataFromApi = await response.json();
 
         if (Array.isArray(dataFromApi) && dataFromApi.length > 0) {
@@ -91,7 +100,9 @@ export default function PodaPage() {
             };
           });
           
-          setReclamos(mappedData.reverse());
+          mappedData.sort((a, b) => parsePodaFecha(b.fecha) - parsePodaFecha(a.fecha));
+          
+          setReclamos(mappedData);
         } else {
           console.error('Formato de datos inesperado de /api/reclamo/poda (después de cambiar API):', dataFromApi);
           setReclamos([]);
