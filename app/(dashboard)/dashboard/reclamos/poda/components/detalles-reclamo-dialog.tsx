@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { MapPin  } from "lucide-react";
 import { Reclamo } from "@/types"; // Importar Reclamo global
 import Image from "next/image";
+import { isValidPodaImageUrl } from "@/lib/podaImageUrl";
 
 interface ReclamoDetailsDialogProps {
   open: boolean;
@@ -71,7 +72,7 @@ export const DetallesReclamoDialog: React.FC<ReclamoDetailsDialogProps> = ({
           </div>
           <div>
             <strong>Imagen:</strong>
-            {reclamo.imagen ? (
+            {isValidPodaImageUrl(reclamo.imagen) ? (
               <Image
                 src={reclamo.imagen}
                 alt="Imagen del reclamo de poda"

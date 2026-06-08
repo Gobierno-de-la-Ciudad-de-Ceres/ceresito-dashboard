@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 
 import { Reclamo } from '@/types' // Usamos la interfaz global
+import { isValidPodaImageUrl } from '@/lib/podaImageUrl'
 
 // Definimos un tipo para las acciones de fila, si es necesario más adelante
 export interface PodaTableRowAction {
@@ -63,7 +64,7 @@ export function getPodaColumns({
       ),
       cell: ({ row }) => {
         const imagenUrl = row.original.imagen
-        return imagenUrl && imagenUrl.startsWith('http') ? (
+        return isValidPodaImageUrl(imagenUrl) ? (
           <Image
             src={imagenUrl}
             alt={`Imagen reclamo ${row.original.id}`}

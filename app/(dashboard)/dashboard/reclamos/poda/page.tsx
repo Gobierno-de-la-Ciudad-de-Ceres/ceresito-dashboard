@@ -77,7 +77,7 @@ export default function PodaPage() {
             if (apiItem.seccion !== undefined && apiItem.seccion !== null && String(apiItem.seccion).trim() !== "") {
               id_reclamo = String(apiItem.seccion);
             } else if (apiItem.fecha) {
-              id_reclamo = `${new Date(apiItem.fecha).getTime()}-${index}`;
+              id_reclamo = `${parsePodaFecha(apiItem.fecha) || Date.now()}-${index}`;
             } else {
               id_reclamo = `${Date.now()}-${index}`;
             }
