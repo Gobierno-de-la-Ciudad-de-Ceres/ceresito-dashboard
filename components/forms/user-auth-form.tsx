@@ -63,7 +63,20 @@ export default function UserAuthForm() {
           toast.error("Error al iniciar sesión: " + result.error);
         } else {
           toast.success("Sesión Iniciada correctamente. ¡Bienvenido!");
-          router.replace("/dashboard");
+          const permissionsRes = await fetch("/api/user/menu-permissions");
+          if (permissionsRes.ok) {
+            const payload = (await permissionsRes.json()) as {
+              menuPermissions?: string[];
+            };
+            const { resolveDefaultDashboardPath } = await import(
+              "@/types/menu-permissions"
+            );
+            router.replace(
+              resolveDefaultDashboardPath(payload.menuPermissions),
+            );
+          } else {
+            router.replace("/dashboard");
+          }
           router.refresh();
         }
       } catch (error) {
