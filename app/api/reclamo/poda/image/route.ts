@@ -1,36 +1,43 @@
 import { NextResponse } from 'next/server';
+
+import {
+  contentTypeForExtension,
+  loadPodaImage,
+} from '@/lib/podaImageLoader';
 import { isValidPodaImageUrl } from '@/lib/podaImageUrl';
 
 export const dynamic = 'force-dynamic';
 
-function extensionFromContentType(contentType: string | null): 'jpeg' | 'png' | 'gif' {
-  if (contentType?.includes('png')) return 'png';
-  if (contentType?.includes('gif')) return 'gif';
-  return 'jpeg';
-}
-
 export async function GET(request: Request) {
-  const url = new URL(request.url).searchParams.get('url');
+  const requestUrl = new URL(request.url);
+  const imageUrl = requestUrl.searchParams.get('url');
+  const inline = requestUrl.searchParams.get('inline') === '1';
 
-  if (!isValidPodaImageUrl(url)) {
+  if (!isValidPodaImageUrl(imageUrl)) {
     return NextResponse.json({ error: 'URL de imagen inválida' }, { status: 400 });
   }
 
   try {
-    const response = await fetch(url!, { cache: 'no-store' });
-    if (!response.ok) {
-      return NextResponse.json({ error: 'No se pudo descargar la imagen' }, { status: 502 });
+    const image = await loadPodaImage(imageUrl);
+    if (!image) {
+      return NextResponse.json({ error: 'No se pudo cargar la imagen' }, { status: 404 });
     }
 
-    const buffer = Buffer.from(await response.arrayBuffer());
-    const extension = extensionFromContentType(response.headers.get('content-type'));
+    if (inline) {
+      return new NextResponse(image.buffer, {
+        headers: {
+          'Content-Type': contentTypeForExtension(image.extension),
+          'Cache-Control': 'private, max-age=300',
+        },
+      });
+    }
 
     return NextResponse.json({
-      base64: buffer.toString('base64'),
-      extension,
+      base64: image.buffer.toString('base64'),
+      extension: image.extension === 'webp' ? 'jpeg' : image.extension,
     });
   } catch (error) {
-    console.error('[poda/image] Error descargando imagen', error);
+    console.error('[poda/image] Error cargando imagen', error);
     return NextResponse.json({ error: 'Error interno' }, { status: 500 });
   }
 }

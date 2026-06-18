@@ -2,8 +2,6 @@
 
 import { DotsHorizontalIcon } from '@radix-ui/react-icons'
 import { type ColumnDef } from '@tanstack/react-table'
-import Image from 'next/image'
-
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { DataTableColumnHeader } from '@/components/data-table/data-table-column-header'
@@ -16,7 +14,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 
 import { Reclamo } from '@/types' // Usamos la interfaz global
-import { isValidPodaImageUrl } from '@/lib/podaImageUrl'
+import { PodaImage } from './poda-image'
 
 // Definimos un tipo para las acciones de fila, si es necesario más adelante
 export interface PodaTableRowAction {
@@ -62,22 +60,15 @@ export function getPodaColumns({
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Imagen" />
       ),
-      cell: ({ row }) => {
-        const imagenUrl = row.original.imagen
-        return isValidPodaImageUrl(imagenUrl) ? (
-          <Image
-            src={imagenUrl}
-            alt={`Imagen reclamo ${row.original.id}`}
-            width={64}
-            height={64}
-            className="aspect-square rounded-md object-cover"
-          />
-        ) : (
-          <div className="flex h-16 w-16 items-center justify-center rounded-md bg-muted text-xs text-muted-foreground">
-            No img
-          </div>
-        )
-      },
+      cell: ({ row }) => (
+        <PodaImage
+          url={row.original.imagen}
+          alt={`Imagen reclamo ${row.original.id}`}
+          width={64}
+          height={64}
+          className="aspect-square h-16 w-16 rounded-md object-cover"
+        />
+      ),
       enableSorting: false,
     },
     {

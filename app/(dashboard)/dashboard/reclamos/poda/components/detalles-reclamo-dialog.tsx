@@ -8,8 +8,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { MapPin  } from "lucide-react";
 import { Reclamo } from "@/types"; // Importar Reclamo global
-import Image from "next/image";
-import { isValidPodaImageUrl } from "@/lib/podaImageUrl";
+import { PodaImage } from "../_components/poda-image";
 
 interface ReclamoDetailsDialogProps {
   open: boolean;
@@ -72,17 +71,16 @@ export const DetallesReclamoDialog: React.FC<ReclamoDetailsDialogProps> = ({
           </div>
           <div>
             <strong>Imagen:</strong>
-            {isValidPodaImageUrl(reclamo.imagen) ? (
-              <Image
-                src={reclamo.imagen}
+            <div className="mt-2">
+              <PodaImage
+                url={reclamo.imagen}
                 alt="Imagen del reclamo de poda"
                 width={128}
                 height={128}
-                className="mt-2 h-32 w-32 rounded-md object-cover"
+                className="h-32 w-32 rounded-md object-cover"
+                emptyLabel="Sin imagen"
               />
-            ) : (
-              <span className="text-sm text-muted-foreground">No hay imagen disponible</span>
-            )}
+            </div>
           </div>
         </div>
         <div className="flex justify-end mt-4">
