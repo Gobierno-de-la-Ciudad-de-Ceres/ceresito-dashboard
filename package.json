@@ -4,13 +4,14 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "prisma:generate": "prisma generate",
+    "prisma:generate": "prisma generate && prisma generate --schema=prisma/planilla-vehiculos.prisma",
     "build": "npm run prisma:generate && next build",
     "start": "next start",
     "lint": "next lint",
     "prettier": "prettier . --write",
     "postinstall": "prisma generate",
-    "seed:roles": "tsx prisma/seed-roles-admin.ts"
+    "seed:roles": "tsx prisma/seed-roles-admin.ts",
+    "seed:jefe-vehiculos": "tsx prisma/seed-jefe-vehiculos.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.1.0",

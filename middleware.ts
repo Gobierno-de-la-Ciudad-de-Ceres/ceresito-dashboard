@@ -1,7 +1,7 @@
 import { getToken } from "next-auth/jwt";
 import { NextResponse, type NextRequest } from "next/server";
 
-import { resolveMenuPermissionFromPath } from "@/types/menu-permissions";
+import { resolveMenuPermissionFromPath, resolveDefaultDashboardPath } from "@/types/menu-permissions";
 
 export const config = {
   matcher: ["/dashboard/:path*", "/cuadrillas/:path*"],
@@ -50,10 +50,9 @@ export async function middleware(req: NextRequest) {
       }
 
       if (!menuPermissions.includes(requiredPermission)) {
-        const fallbackPath = menuPermissions.includes("panel")
-          ? "/dashboard"
-          : "/";
-        return NextResponse.redirect(new URL(fallbackPath, req.url));
+        return NextResponse.redirect(
+          new URL(resolveDefaultDashboardPath(menuPermissions), req.url),
+        );
       }
     } catch (error) {
       console.error("Error resolving menu permissions in middleware:", error);

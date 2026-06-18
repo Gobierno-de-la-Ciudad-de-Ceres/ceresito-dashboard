@@ -20,6 +20,11 @@ export const MENU_SECTIONS: MenuSection[] = [
     title: "Plataforma de Servicios",
     url: "/dashboard/servicios",
   },
+  {
+    id: "vehiculos",
+    title: "Vehículos Policía Municipal",
+    url: "/dashboard/vehiculos-policia-municipal/historial",
+  },
   { id: "ceresito", title: "Ceresito", url: "/dashboard/ceresito" },
   { id: "ajustes", title: "Ajustes", url: "/dashboard/settings" },
   { id: "salir", title: "Salir", url: "/" },
@@ -41,6 +46,10 @@ const ROUTE_PERMISSION_MATCHERS: Array<{ prefix: string; permission: string }> =
     { prefix: "/cuadrillas", permission: "obras" },
     { prefix: "/dashboard/encuestas", permission: "encuestas" },
     { prefix: "/dashboard/servicios", permission: "servicios" },
+    {
+      prefix: "/dashboard/vehiculos-policia-municipal",
+      permission: "vehiculos",
+    },
     { prefix: "/dashboard/ceresito", permission: "ceresito" },
     { prefix: "/dashboard/contacts", permission: "ceresito" },
     { prefix: "/dashboard", permission: "panel" },
@@ -67,4 +76,18 @@ export function resolveMenuPermissionFromPath(pathname: string): string | null {
   );
 
   return match?.permission ?? null;
+}
+
+export function resolveDefaultDashboardPath(permissions?: string[] | null): string {
+  const normalized = normalizeMenuPermissions(permissions);
+  if (normalized.includes("panel")) return "/dashboard";
+
+  const section = MENU_SECTIONS.find(
+    (item) =>
+      item.id !== "salir" &&
+      item.id !== "ajustes" &&
+      normalized.includes(item.id),
+  );
+
+  return section?.url ?? "/dashboard";
 }

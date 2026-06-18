@@ -7,6 +7,7 @@ import {
   Settings,
   ClipboardList,
   Briefcase,
+  Car,
 } from "lucide-react";
 
 export const navItems = {
@@ -100,6 +101,22 @@ export const navItems = {
         {
           title: "Soporte",
           url: "/dashboard/servicios/solicitudes",
+        },
+      ],
+    },
+    {
+      id: "vehiculos",
+      title: "Vehículos Policía Municipal",
+      url: "/dashboard/vehiculos-policia-municipal/historial",
+      icon: Car,
+      items: [
+        {
+          title: "Historial",
+          url: "/dashboard/vehiculos-policia-municipal/historial",
+        },
+        {
+          title: "Patentes",
+          url: "/dashboard/vehiculos-policia-municipal/patentes",
         },
       ],
     },

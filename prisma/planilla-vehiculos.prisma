@@ -1,0 +1,61 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/planilla-vehiculos"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("PLANILLA_VEHICULOS_DATABASE_URL")
+}
+
+enum EstadoEntrega {
+  EN_CURSO
+  COMPLETADA
+}
+
+model Vehiculo {
+  id        Int               @id @default(autoincrement())
+  patente   String            @unique
+  tipo      String
+  activo    Boolean           @default(true)
+  entregas  EntregaVehiculo[]
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+}
+
+model EntregaVehiculo {
+  id         Int           @id @default(autoincrement())
+  vehiculoId Int
+  vehiculo   Vehiculo      @relation(fields: [vehiculoId], references: [id])
+  estado     EstadoEntrega @default(EN_CURSO)
+
+  inicioFechaHora   DateTime?
+  inicioKilometros  Int?
+  inicioCombustible String?
+  inicioLimpieza    String?
+  inicioLuces       String?
+  inicioNeumaticos  String?
+  inicioFotoTablero String?
+
+  finalFechaHora   DateTime?
+  finalKilometros  Int?
+  finalCombustible String?
+  finalLimpieza    String?
+  finalLuces       String?
+  finalNeumaticos  String?
+  finalFotoTablero String?
+
+  observaciones       String?
+  equipamiento        Json?
+  cantidadMultas      Int     @default(0)
+  cantidadRetenciones Int     @default(0)
+  inspectorNombre     String?
+  inspectorApellido   String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([vehiculoId])
+  @@index([estado])
+  @@index([createdAt])
+}
