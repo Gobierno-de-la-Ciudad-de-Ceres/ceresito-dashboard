@@ -69,6 +69,11 @@ export function resolveServicesMediaSrc(src?: string | null) {
     return buildServicesAssetUrl(normalizedSrc);
   }
 
+  // Imágenes estáticas del catálogo (seed: /images/servicios/*, /images/profesionales/*)
+  if (normalizedSrc.startsWith("/images/")) {
+    return buildServicesAssetUrl(normalizedSrc);
+  }
+
   return normalizedSrc;
 }
 
