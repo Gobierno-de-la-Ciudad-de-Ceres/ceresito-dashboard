@@ -9,6 +9,7 @@ export const dynamic = "force-dynamic";
 const createVehiculoSchema = z.object({
   patente: z.string().min(4).max(12),
   tipo: z.string().min(3).max(200),
+  imei: z.string().min(10).max(20).optional().nullable(),
 });
 
 export async function GET() {
@@ -47,11 +48,12 @@ export async function POST(request: NextRequest) {
 
     const patente = parsed.data.patente.trim().toUpperCase();
     const tipo = parsed.data.tipo.trim();
+    const imei = parsed.data.imei?.trim() || null;
 
     const vehiculo = await planillaVehiculosPrisma.vehiculo.upsert({
       where: { patente },
-      update: { tipo, activo: true },
-      create: { patente, tipo, activo: true },
+      update: { tipo, imei, activo: true },
+      create: { patente, tipo, imei, activo: true },
     });
 
     return NextResponse.json(vehiculo, { status: 201 });

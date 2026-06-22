@@ -118,6 +118,10 @@ export const navItems = {
           title: "Patentes",
           url: "/dashboard/vehiculos-policia-municipal/patentes",
         },
+        {
+          title: "Rastreo",
+          url: "/dashboard/vehiculos-policia-municipal/rastreo",
+        },
       ],
     },
     {

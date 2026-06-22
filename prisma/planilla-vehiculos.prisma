@@ -17,6 +17,7 @@ model Vehiculo {
   id        Int               @id @default(autoincrement())
   patente   String            @unique
   tipo      String
+  imei      String?
   activo    Boolean           @default(true)
   entregas  EntregaVehiculo[]
   createdAt DateTime          @default(now())

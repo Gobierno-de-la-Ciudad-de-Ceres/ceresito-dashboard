@@ -13,6 +13,7 @@ type RouteContext = {
 const patchSchema = z.object({
   activo: z.boolean().optional(),
   tipo: z.string().min(3).max(200).optional(),
+  imei: z.string().min(10).max(20).nullable().optional(),
 });
 
 export async function PATCH(request: NextRequest, context: RouteContext) {
@@ -31,9 +32,20 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       );
     }
 
+    const { activo, tipo, imei } = parsed.data;
+    const data: {
+      activo?: boolean;
+      tipo?: string;
+      imei?: string | null;
+    } = {};
+
+    if (activo !== undefined) data.activo = activo;
+    if (tipo !== undefined) data.tipo = tipo.trim();
+    if (imei !== undefined) data.imei = imei?.trim() || null;
+
     const vehiculo = await planillaVehiculosPrisma.vehiculo.update({
       where: { id: Number(id) },
-      data: parsed.data,
+      data,
     });
 
     return NextResponse.json(vehiculo);
