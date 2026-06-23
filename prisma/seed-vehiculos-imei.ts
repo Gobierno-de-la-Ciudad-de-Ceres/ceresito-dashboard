@@ -6,10 +6,16 @@ import { PrismaClient } from "../generated/planilla-vehiculos";
  *   npm run seed:vehiculos-imei
  */
 const IMEI_BY_PATENTE: Record<string, string> = {
+  // Inspectores
   AF814RE: "352672107311219", // Renault Kangoo
   A137KMV: "358878730156384", // Guerrero Trip 110 roja
   A122PWS: "358878730160238", // Honda Titan 150 roja
   A122PWR: "358878730159404", // Honda Titan 150 negra PM
+  // Ojos en Alerta
+  A126CJB: "352672107405557", // Honda Titan 150
+  MMZ658: "352672107404378", // Volkswagen Vento
+  A195WBX: "352672107296915", // Honda XR 150 blanca
+  A195WBY: "352672107305815", // Honda XR 150 roja
 };
 
 const prisma = new PrismaClient();
