@@ -13,23 +13,18 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 
-import { Reclamo } from '@/types' // Usamos la interfaz global
 import { PodaImage } from './poda-image'
-
-// Definimos un tipo para las acciones de fila, si es necesario más adelante
-export interface PodaTableRowAction {
-  label: string
-  action: (reclamo: Reclamo) => void
-}
+import type { PodaReclamo } from './poda-types'
 
 interface GetPodaColumnsProps {
-  onViewDetails: (reclamo: Reclamo) => void
-  // Puedes añadir más acciones aquí si es necesario, ej: onDelete, onEdit
+  onViewDetails: (reclamo: PodaReclamo) => void
+  onDelete: (reclamo: PodaReclamo) => void
 }
 
 export function getPodaColumns({
   onViewDetails,
-}: GetPodaColumnsProps): ColumnDef<Reclamo>[] {
+  onDelete,
+}: GetPodaColumnsProps): ColumnDef<PodaReclamo>[] {
   return [
     {
       id: 'select',
@@ -76,10 +71,7 @@ export function getPodaColumns({
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Fecha" />
       ),
-      cell: ({ row }) => {
-        // Formatear la fecha si es necesario, ej: new Date(row.original.fecha).toLocaleDateString('es-ES')
-        return <div className="w-[100px]">{row.original.fecha}</div>
-      },
+      cell: ({ row }) => <div className="w-[100px]">{row.original.fecha}</div>,
     },
     {
       accessorKey: 'nombre',
@@ -119,30 +111,16 @@ export function getPodaColumns({
             <DropdownMenuItem onClick={() => onViewDetails(row.original)}>
               Ver Detalles
             </DropdownMenuItem>
-            {/* 
-            // Ejemplo de más acciones:
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              onClick={() => {
-                // Lógica para editar
-                console.log('Edit:', row.original.id)
-              }}
-            >
-              Editar
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => {
-                // Lógica para eliminar
-                console.log('Delete:', row.original.id)
-              }}
-              className="text-red-600"
+              onClick={() => onDelete(row.original)}
+              className="text-red-600 focus:text-red-600"
             >
               Eliminar
-            </DropdownMenuItem> 
-            */}
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       ),
     },
   ]
-} 
+}

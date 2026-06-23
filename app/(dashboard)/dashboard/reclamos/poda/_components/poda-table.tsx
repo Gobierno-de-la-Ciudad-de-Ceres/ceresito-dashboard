@@ -16,7 +16,6 @@ import {
   useReactTable,
 } from '@tanstack/react-table'
 
-import { Reclamo } from '@/types'
 import { DataTablePagination } from '@/components/data-table/data-table-pagination'
 import {
   Table,
@@ -28,13 +27,21 @@ import {
 } from '@/components/ui/table'
 
 import { PodaTableToolbar } from './poda-table-toolbar'
+import type { PodaReclamo } from './poda-types'
 
 interface PodaTableProps {
-  columns: ColumnDef<Reclamo>[]
-  data: Reclamo[]
+  columns: ColumnDef<PodaReclamo>[]
+  data: PodaReclamo[]
+  onDeleteSelected?: (reclamos: PodaReclamo[]) => void
+  deleting?: boolean
 }
 
-export function PodaTable({ columns, data }: PodaTableProps) {
+export function PodaTable({
+  columns,
+  data,
+  onDeleteSelected,
+  deleting = false,
+}: PodaTableProps) {
   const [rowSelection, setRowSelection] = React.useState({})
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({})
@@ -68,7 +75,11 @@ export function PodaTable({ columns, data }: PodaTableProps) {
 
   return (
     <div className="w-full space-y-4">
-      <PodaTableToolbar table={table} />
+      <PodaTableToolbar
+        table={table}
+        onDeleteSelected={onDeleteSelected}
+        deleting={deleting}
+      />
       <div className="rounded-md border">
         <Table>
           <TableHeader>
