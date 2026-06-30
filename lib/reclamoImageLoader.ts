@@ -32,6 +32,7 @@ function getLocalReclamoDirs(): string[] {
     '/var/www/ceres-api/media/reclamos',
     '/root/ceres-api/media/reclamos',
     '/root/ceresito/src/media/reclamos',
+    '/root/ceresito/media/reclamos',
     '/root/ceresito/base-ts-meta-postgres/src/media/reclamos',
     path.resolve(process.cwd(), '../ceres-api/media/reclamos'),
     path.resolve(process.cwd(), '../../ceres-api/media/reclamos'),

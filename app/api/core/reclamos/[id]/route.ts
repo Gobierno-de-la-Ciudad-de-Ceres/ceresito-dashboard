@@ -17,7 +17,7 @@ function normalizeBaseUrl(value: string): string {
 }
 
 function resolveTarget(): Target {
-  const value = (process.env.CORE_API_TARGET || 'legacy').toLowerCase();
+  const value = (process.env.CORE_API_TARGET || 'v1').toLowerCase();
   return value === 'v1' ? 'v1' : 'legacy';
 }
 
