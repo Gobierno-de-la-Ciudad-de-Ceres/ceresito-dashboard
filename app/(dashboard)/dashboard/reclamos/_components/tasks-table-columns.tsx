@@ -30,6 +30,7 @@ import { DataTableColumnHeader } from "@/components/data-table/data-table-column
 import { updateReclamoEstado } from "../_lib/actions";
 import { DeleteTasksDialog } from "./delete-tasks-dialog";
 import { UpdateTaskSheet } from "./update-task-sheet";
+import { ReclamoImage } from "./reclamo-image";
 import { labelEnum, statusEnum } from "@/db/schema";
 import { getStatusIcon } from "../_lib/utils";
 
@@ -58,6 +59,7 @@ export interface Reclamo {
   estado: string | null;
   detalle: string | null;
   prioridad: string | null;
+  imagen?: string | null;
   latitud: string | null;
   longitud: string | null;
   cuadrillaid: number | null;
@@ -96,6 +98,22 @@ export function getColumns({
       ),
       enableSorting: false,
       enableHiding: false,
+    },
+    {
+      accessorKey: "imagen",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Imagen" />
+      ),
+      cell: ({ row }) => (
+        <ReclamoImage
+          url={row.original.imagen}
+          alt={`Imagen reclamo ${row.original.id}`}
+          width={64}
+          height={64}
+          className="aspect-square h-16 w-16 rounded-md object-cover"
+        />
+      ),
+      enableSorting: false,
     },
     {
       accessorKey: "fecha",
