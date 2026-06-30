@@ -3,6 +3,13 @@ export function normalizeReclamoImageUrl(url?: string | null): string | null {
   const trimmed = url.trim();
   if (!trimmed || trimmed === 'No') return null;
 
+  if (trimmed.startsWith('/media/reclamos/')) {
+    const base = (process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.ceres.gob.ar')
+      .replace(/\/$/, '')
+      .replace(/\/api$/, '');
+    return `${base}${trimmed}`;
+  }
+
   return trimmed.replace('/api/media/reclamos/', '/media/reclamos/');
 }
 

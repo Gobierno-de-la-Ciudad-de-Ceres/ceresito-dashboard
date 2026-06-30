@@ -348,9 +348,10 @@ export function getColumns({
                   </DropdownMenuSubContent>
                 </DropdownMenuSub>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onSelect={() => setShowDeleteTaskDialog(true)}
-                >
+            <DropdownMenuItem
+              onSelect={() => setShowDeleteTaskDialog(true)}
+              className="text-red-600 focus:text-red-600"
+            >
                   Eliminar Reclamo
                   <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>
                 </DropdownMenuItem>

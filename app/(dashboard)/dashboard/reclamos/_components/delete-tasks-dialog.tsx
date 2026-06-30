@@ -39,7 +39,7 @@ export function DeleteTasksDialog({
     <Dialog {...props}>
       {showTrigger ? (
         <DialogTrigger asChild>
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
             <TrashIcon className="mr-2 size-4" aria-hidden="true" />
             Eliminar ({tasks.length})
           </Button>
@@ -73,7 +73,11 @@ export function DeleteTasksDialog({
                 }
 
                 props.onOpenChange?.(false)
-                toast.success("Tasks deleted")
+                toast.success(
+                  tasks.length === 1
+                    ? "Reclamo eliminado"
+                    : `${tasks.length} reclamos eliminados`,
+                )
                 onSuccess?.()
               })
             }}

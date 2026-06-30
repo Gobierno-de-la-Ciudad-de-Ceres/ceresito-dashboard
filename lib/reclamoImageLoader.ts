@@ -29,6 +29,7 @@ function extensionFromContentType(contentType: string | null): ReclamoImagePaylo
 function getLocalReclamoDirs(): string[] {
   const candidates = [
     process.env.MEDIA_RECLAMOS_PATH,
+    '/var/www/ceres-api/media/reclamos',
     '/root/ceres-api/media/reclamos',
     '/root/ceresito/src/media/reclamos',
     '/root/ceresito/base-ts-meta-postgres/src/media/reclamos',
