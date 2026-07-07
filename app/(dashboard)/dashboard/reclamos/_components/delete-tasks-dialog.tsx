@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { useRouter } from "next/navigation"
 import { type Task } from "@/db/schema"
 import { ReloadIcon, TrashIcon } from "@radix-ui/react-icons"
 import { type Row } from "@tanstack/react-table"
@@ -19,12 +20,13 @@ import {
 } from "@/components/ui/dialog"
 
 import { deleteTasks } from "../_lib/actions"
+import { useRemoveTasksFromTable } from "./tasks-table-mutations"
 
 interface DeleteTasksDialogProps
   extends React.ComponentPropsWithoutRef<typeof Dialog> {
   tasks: Row<Task>["original"][]
   showTrigger?: boolean
-  onSuccess?: () => void
+  onSuccess?: (deletedIds: string[]) => void
 }
 
 export function DeleteTasksDialog({
@@ -33,6 +35,8 @@ export function DeleteTasksDialog({
   onSuccess,
   ...props
 }: DeleteTasksDialogProps) {
+  const router = useRouter()
+  const removeTasksFromTable = useRemoveTasksFromTable()
   const [isDeletePending, startDeleteTransition] = React.useTransition()
 
   return (
@@ -63,9 +67,8 @@ export function DeleteTasksDialog({
             variant="destructive"
             onClick={() => {
               startDeleteTransition(async () => {
-                const { error } = await deleteTasks({
-                  ids: tasks.map((task) => task.id),
-                })
+                const deletedIds = tasks.map((task) => task.id)
+                const { error } = await deleteTasks({ ids: deletedIds })
 
                 if (error) {
                   toast.error(error)
@@ -73,12 +76,14 @@ export function DeleteTasksDialog({
                 }
 
                 props.onOpenChange?.(false)
+                removeTasksFromTable?.(deletedIds)
                 toast.success(
                   tasks.length === 1
                     ? "Reclamo eliminado"
                     : `${tasks.length} reclamos eliminados`,
                 )
-                onSuccess?.()
+                onSuccess?.(deletedIds)
+                router.refresh()
               })
             }}
             disabled={isDeletePending}

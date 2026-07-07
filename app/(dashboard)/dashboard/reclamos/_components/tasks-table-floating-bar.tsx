@@ -29,7 +29,8 @@ import {
 } from "@/components/ui/tooltip"
 import { Kbd } from "@/components/kbd"
 
-import { deleteTasks, updateTasks } from "../_lib/actions"
+import { updateTasks } from "../_lib/actions"
+import { DeleteTasksDialog } from "./delete-tasks-dialog"
 import { TooltipProvider } from "@radix-ui/react-tooltip"
 
 interface TasksTableFloatingBarProps {
@@ -40,6 +41,7 @@ export function TasksTableFloatingBar({ table }: TasksTableFloatingBarProps) {
   const rows = table.getFilteredSelectedRowModel().rows
 
   const [isPending, startTransition] = React.useTransition()
+  const [showDeleteDialog, setShowDeleteDialog] = React.useState(false)
   const [method, setMethod] = React.useState<
     "update-status" | "update-priority" | "export" | "delete"
   >()
@@ -57,6 +59,14 @@ export function TasksTableFloatingBar({ table }: TasksTableFloatingBarProps) {
   }, [table])
 
   return (
+    <>
+      <DeleteTasksDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        tasks={rows.map((row) => row.original)}
+        showTrigger={false}
+        onSuccess={() => table.toggleAllRowsSelected(false)}
+      />
     <div className="fixed inset-x-0 bottom-4 z-50 mx-auto w-fit px-4">
       <div className="w-full overflow-x-auto">
         <div className="mx-auto flex w-fit items-center gap-2 rounded-md border bg-card p-2 shadow-2xl">
@@ -264,22 +274,7 @@ export function TasksTableFloatingBar({ table }: TasksTableFloatingBarProps) {
                     variant="secondary"
                     size="icon"
                     className="size-7 border"
-                    onClick={() => {
-                      setMethod("delete");
-
-                      startTransition(async () => {
-                        const { error } = await deleteTasks({
-                          ids: rows.map((row) => row.original.id),
-                        });
-
-                        if (error) {
-                          toast.error(error);
-                          return;
-                        }
-
-                        table.toggleAllRowsSelected(false);
-                      });
-                    }}
+                    onClick={() => setShowDeleteDialog(true)}
                     disabled={isPending}
                   >
                     {isPending && method === "delete" ? (
@@ -298,5 +293,6 @@ export function TasksTableFloatingBar({ table }: TasksTableFloatingBarProps) {
         </div>
       </div>
     </div>
+    </>
   )
 }

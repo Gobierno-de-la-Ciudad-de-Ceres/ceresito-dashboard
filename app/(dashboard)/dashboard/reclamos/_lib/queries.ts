@@ -4,9 +4,6 @@ import { unstable_noStore as noStore } from "next/cache"
 import { headers } from "next/headers"
 import type { GetTasksSchema } from "./validations"
 
-// Constante para el tiempo de caché en segundos
-const CACHE_TIME = 60 // 1 minuto
-
 function resolveInternalOrigin() {
   try {
     const requestHeaders = headers()
@@ -26,10 +23,7 @@ function resolveInternalOrigin() {
 }
 
 export async function getTasks(input: GetTasksSchema) {
-  // Solo desactivamos el caché si se solicita explícitamente
-  if (input.no_cache) {
-    noStore()
-  }
+  noStore()
   
   const { page, per_page, sort, estado, prioridad, from, to, search } = input
 
@@ -65,16 +59,7 @@ export async function getTasks(input: GetTasksSchema) {
     if (fromDay) apiUrl += `&from=${fromDay}`
     if (toDay) apiUrl += `&to=${toDay}`
 
-    console.log("URL API: ", apiUrl); // Log para debugging
-
-    // Opciones de caché para la petición fetch
-    const fetchOptions: RequestInit = {
-      next: {
-        revalidate: input.no_cache ? 0 : CACHE_TIME // Revalidar cada minuto si no se desactiva el caché
-      }
-    }
-
-    const response = await fetch(apiUrl, fetchOptions)
+    const response = await fetch(apiUrl, { cache: "no-store" })
     if (!response.ok) {
       throw new Error("Error al obtener los reclamos de la API externa")
     }
@@ -90,10 +75,10 @@ export async function getTasks(input: GetTasksSchema) {
 }
 
 export async function getTaskCountByStatus() {
-  // Usamos caché para esta función ya que no necesita actualizarse tan frecuentemente
+  noStore()
   try {
     const response = await fetch(`${resolveInternalOrigin()}/api/core/reclamos/count-by-status`, {
-      next: { revalidate: CACHE_TIME * 5 } // Revalidar cada 5 minutos
+      cache: "no-store",
     })
     if (!response.ok) {
       throw new Error("Error al obtener el conteo de reclamos por estado")
@@ -106,10 +91,10 @@ export async function getTaskCountByStatus() {
 }
 
 export async function getTaskCountByPriority() {
-  // Usamos caché para esta función ya que no necesita actualizarse tan frecuentemente
+  noStore()
   try {
     const response = await fetch(`${resolveInternalOrigin()}/api/core/reclamos/count-by-priority`, {
-      next: { revalidate: CACHE_TIME * 5 } // Revalidar cada 5 minutos
+      cache: "no-store",
     })
     if (!response.ok) {
       throw new Error("Error al obtener el conteo de reclamos por prioridad")

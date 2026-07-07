@@ -4,7 +4,6 @@ import { useState } from "react"
 import { type Task } from "@/db/schema"
 import { DownloadIcon } from "@radix-ui/react-icons"
 import { type Table } from "@tanstack/react-table"
-import { useRouter } from 'next/navigation'
 
 import { exportReclamosToExcel, exportReclamosToPDF } from "@/lib/reclamoExport"
 import { Button } from "@/components/ui/button"
@@ -19,7 +18,6 @@ interface TasksTableToolbarActionsProps {
 export function TasksTableToolbarActions({
   table,
 }: TasksTableToolbarActionsProps) {
-  const router = useRouter()
   const selectedRowCount = table.getFilteredSelectedRowModel().rows.length;
   const [exporting, setExporting] = useState<'excel' | 'pdf' | null>(null)
 
@@ -62,7 +60,6 @@ export function TasksTableToolbarActions({
             .rows.map((row) => row.original)}
           onSuccess={() => {
             table.toggleAllRowsSelected(false)
-            router.refresh()
           }}
         />
       ) : null}

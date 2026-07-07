@@ -25,6 +25,7 @@ import { getStatusIcon } from "../_lib/utils"
 import { statusEnum } from "@/db/schema"
 import { UpdateTaskSheet } from "./update-task-sheet"
 import { DeleteTasksDialog } from "./delete-tasks-dialog"
+import { TasksTableMutationsProvider } from "./tasks-table-mutations"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -50,7 +51,16 @@ export function TasksTable({ tasksPromise }: TasksTableProps) {
   const searchParams = useSearchParams()
 
   // Obtener datos de la API
-  const { data, pageCount } = React.use(tasksPromise)
+  const { data: serverData, pageCount } = React.use(tasksPromise)
+  const [data, setData] = React.useState(serverData)
+
+  React.useEffect(() => {
+    setData(serverData)
+  }, [serverData])
+
+  const removeTasksFromTable = React.useCallback((ids: string[]) => {
+    setData((current) => current.filter((task) => !ids.includes(task.id)))
+  }, [])
 
   // Estado para manejar acciones de fila
   const [rowAction, setRowAction] = React.useState<DataTableRowAction<Reclamo> | null>(null)
@@ -183,6 +193,7 @@ export function TasksTable({ tasksPromise }: TasksTableProps) {
   }, [featureFlags, table])
 
   return (
+    <TasksTableMutationsProvider onRemoveTasks={removeTasksFromTable}>
     <div className="space-y-4">
       {/* Barra de filtros */}
       <div className="flex items-center justify-between">
@@ -283,8 +294,11 @@ export function TasksTable({ tasksPromise }: TasksTableProps) {
         onOpenChange={() => setRowAction(null)}
         tasks={rowAction?.row.original ? [rowAction?.row.original] : []}
         showTrigger={false}
-        onSuccess={() => rowAction?.row.toggleSelected(false)}
+        onSuccess={() => {
+          rowAction?.row.toggleSelected(false)
+        }}
       />
     </div>
+    </TasksTableMutationsProvider>
   )
 }

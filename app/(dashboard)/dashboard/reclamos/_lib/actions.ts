@@ -22,6 +22,11 @@ function resolveInternalOrigin() {
 
   return "http://localhost:3000"
 }
+
+function revalidateReclamosList() {
+  revalidatePath("/dashboard/reclamos")
+  revalidatePath("/dashboard/reclamos", "layout")
+}
 // Función para crear una nueva tarea en la API externa
 export async function createTask(input: CreateTaskSchema) {
   noStore()
@@ -47,7 +52,7 @@ export async function createTask(input: CreateTaskSchema) {
       throw new Error("Error al crear el reclamo en la API externa")
     }
 
-    revalidatePath("/")
+    revalidateReclamosList()
 
     return {
       data: null,
@@ -88,7 +93,7 @@ export async function updateTask(input: UpdateTaskSchema & { id: string }) {
       throw new Error(`Error al actualizar el reclamo: ${errorText}`);
     }
 
-    revalidatePath("/");
+    revalidateReclamosList();
 
     return {
       data: null,
@@ -128,7 +133,7 @@ export async function updateTasks(input: {
       })
     )
 
-    revalidatePath("/")
+    revalidateReclamosList()
 
     return {
       data: null,
@@ -161,7 +166,7 @@ export async function updateReclamoEstado(id: string, estado: string, notificar:
       throw new Error(`Error al actualizar el estado del reclamo: ${responseText}`);
     }
 
-    revalidatePath("/");
+    revalidateReclamosList();
 
     return {
       data: null,
@@ -187,7 +192,7 @@ export async function deleteTask(input: { id: string }) {
       throw new Error("Error al eliminar el reclamo en la API externa")
     }
 
-    revalidatePath("/")
+    revalidateReclamosList()
 
     return {
       data: null,
@@ -215,7 +220,7 @@ export async function deleteTasks(input: { ids: string[] }) {
       })
     )
 
-    revalidatePath("/")
+    revalidateReclamosList()
 
     return {
       data: null,
