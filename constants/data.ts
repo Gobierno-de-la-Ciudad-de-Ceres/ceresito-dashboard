@@ -87,6 +87,10 @@ export const navItems = {
           url: "/dashboard/servicios/usuarios",
         },
         {
+          title: "Empleos",
+          url: "/dashboard/servicios/empleos",
+        },
+        {
           title: "Categorias",
           url: "/dashboard/servicios/categorias",
         },

@@ -721,6 +721,63 @@ function normalizeCategoriesList(data: RawCategoriesListResponse): CategoriesLis
   };
 }
 
+export interface APIAdminJobPostResponse {
+  id: string;
+  companyName: string;
+  title: string;
+  location: string;
+  positionsCount: number;
+  description: string;
+  searchStartsAt: string;
+  searchEndsAt: string;
+  requirements: string;
+  contactEmail: string | null;
+  contactPhone: string | null;
+  status: "active" | "closed" | "taken_down";
+  createdAt: string;
+  updatedAt: string;
+  takenDownAt?: string | null;
+  takenDownReason?: string | null;
+  employer?: {
+    id: string;
+    companyName: string;
+    logoUrl: string;
+    phone: string;
+  };
+}
+
+export interface APIAdminEmployerResponse {
+  id: string;
+  companyName: string;
+  taxId: string;
+  taxIdType: string;
+  phone: string;
+  logoUrl: string;
+  createdAt: string;
+  updatedAt: string;
+  jobPostsCount: number;
+  activeJobPostsCount: number;
+  user?: {
+    id: string;
+    email: string;
+    firstName: string | null;
+    lastName: string | null;
+  } | null;
+}
+
+export interface ListAdminJobPostsParams {
+  page?: number;
+  limit?: number;
+  status?: "active" | "closed" | "taken_down";
+  search?: string;
+}
+
+export interface ListAdminEmployersParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+}
+
 /**
  * Cliente de API de Servicios
  */
@@ -1830,6 +1887,109 @@ class ServicesAPIClient {
       };
     }
     return result as APIResponse<{ id: string }> | APIError;
+  }
+
+  // ==================== EMPLEOS ====================
+
+  async listJobPosts(
+    params?: ListAdminJobPostsParams,
+  ): Promise<PaginatedAPIResponse<APIAdminJobPostResponse> | APIError> {
+    const queryParams = new URLSearchParams();
+    if (params?.page) queryParams.set("page", params.page.toString());
+    if (params?.limit) queryParams.set("limit", params.limit.toString());
+    if (params?.status) queryParams.set("status", params.status);
+    if (params?.search) queryParams.set("search", params.search);
+
+    const query = queryParams.toString();
+    const result = await this.request<APIAdminJobPostResponse>(
+      `/api/admin/job-posts${query ? `?${query}` : ""}`,
+    );
+    if (result.success && !("pagination" in result)) {
+      return {
+        success: false,
+        error: "unexpected_response",
+        message: "Se esperaba una respuesta paginada",
+      };
+    }
+    return result as PaginatedAPIResponse<APIAdminJobPostResponse> | APIError;
+  }
+
+  async takeDownJobPost(
+    id: string,
+    reason?: string,
+  ): Promise<APIResponse<APIAdminJobPostResponse> | APIError> {
+    const result = await this.request<APIAdminJobPostResponse>(
+      `/api/admin/job-posts/${id}/take-down`,
+      {
+        method: "POST",
+        body: JSON.stringify({ reason }),
+      },
+    );
+    if ("pagination" in result) {
+      return {
+        success: false,
+        error: "unexpected_response",
+        message: "Se esperaba una respuesta simple, se recibió una respuesta paginada",
+      };
+    }
+    return result as APIResponse<APIAdminJobPostResponse> | APIError;
+  }
+
+  async deleteJobPost(id: string): Promise<APIResponse<APIAdminJobPostResponse> | APIError> {
+    const result = await this.request<APIAdminJobPostResponse>(`/api/admin/job-posts/${id}`, {
+      method: "DELETE",
+    });
+    if ("pagination" in result) {
+      return {
+        success: false,
+        error: "unexpected_response",
+        message: "Se esperaba una respuesta simple, se recibió una respuesta paginada",
+      };
+    }
+    return result as APIResponse<APIAdminJobPostResponse> | APIError;
+  }
+
+  async listEmployers(
+    params?: ListAdminEmployersParams,
+  ): Promise<PaginatedAPIResponse<APIAdminEmployerResponse> | APIError> {
+    const queryParams = new URLSearchParams();
+    if (params?.page) queryParams.set("page", params.page.toString());
+    if (params?.limit) queryParams.set("limit", params.limit.toString());
+    if (params?.search) queryParams.set("search", params.search);
+
+    const query = queryParams.toString();
+    const result = await this.request<APIAdminEmployerResponse>(
+      `/api/admin/employers${query ? `?${query}` : ""}`,
+    );
+    if (result.success && !("pagination" in result)) {
+      return {
+        success: false,
+        error: "unexpected_response",
+        message: "Se esperaba una respuesta paginada",
+      };
+    }
+    return result as PaginatedAPIResponse<APIAdminEmployerResponse> | APIError;
+  }
+
+  async takeDownEmployerJobs(
+    employerId: string,
+    reason?: string,
+  ): Promise<APIResponse<{ updated: number }> | APIError> {
+    const result = await this.request<{ updated: number }>(
+      `/api/admin/employers/${employerId}/take-down-jobs`,
+      {
+        method: "POST",
+        body: JSON.stringify({ reason }),
+      },
+    );
+    if ("pagination" in result) {
+      return {
+        success: false,
+        error: "unexpected_response",
+        message: "Se esperaba una respuesta simple, se recibió una respuesta paginada",
+      };
+    }
+    return result as APIResponse<{ updated: number }> | APIError;
   }
 }
 
